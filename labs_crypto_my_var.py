@@ -1,4 +1,4 @@
-from labs_crypto import lab1, lab2, LFSR
+from labs_1_and_2 import lab1, lab2, LFSR
 
 lab1.task2([1,7,2,8,3,5,4,9,6], "Схема предварительного распределения ключей состоит из двух алгоритмов: распределения исходной ключевой информации и формирования ключа.".replace(' ', '').replace(':','').replace('.','').upper())
 print()

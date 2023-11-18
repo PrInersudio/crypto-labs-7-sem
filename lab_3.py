@@ -1,4 +1,17 @@
 from sympy import isprime
+import ctypes
+
+
+# достаём сишную функцию для нахождения позиций старшего и младшего бита (в Си код этой херни короче получается, чем в Питоне, лол)
+find_set_bits_dll = ctypes.CDLL('./find_set_bits.dll')
+
+last_set_bit = find_set_bits_dll.last_set_bit
+last_set_bit.restype = ctypes.c_uint
+last_set_bit.argtypes = [ctypes.c_ulong]
+
+first_set_bit = find_set_bits_dll.first_set_bit
+first_set_bit.restype = ctypes.c_uint
+first_set_bit.argtypes = [ctypes.c_ulong]
 
 
 class point:
@@ -27,6 +40,7 @@ class elliptic_curve:
     
     def is_singular(self) -> bool:
         print("\n")
+        print(self)
         print(f'4*{self.a}^3+27*{self.b}^2(mod {self.p}) = {4*self.a**3+27*self.b**2}(mod {self.p})={(4*self.a**3+27*self.b**2)%self.p}')
         if (4*self.a**3+27*self.b**2)%self.p == 0:
             print("Сингулярная")
@@ -81,26 +95,27 @@ class elliptic_curve:
     
     def multiply_point(self, P: point, multiplier: int) -> point:
         print("\n")
-        multiplier_as_powers_of_two = [index for index, bit in enumerate(list(bin(multiplier)[2:][::-1])) if bit == '1']
-        print(multiplier,end='=')
-        for two_power in multiplier_as_powers_of_two: print(2**two_power,end='+')
+        multiplier_first_set_bit = first_set_bit(multiplier)
+        multiplier_binary_representation = str(2**multiplier_first_set_bit) + '+'
+        R_as_P_bin_sums = str(2**multiplier_first_set_bit) + 'P+'
+        R_as_P_recursive_bin_sums = elliptic_curve.__recursive_string(multiplier_first_set_bit) + '+'
+        for _ in range(multiplier_first_set_bit): P = self.__double_point(P)
+        num_of_doubles = multiplier_first_set_bit
+        R = P
+        for i in range(multiplier_first_set_bit+1, last_set_bit(multiplier)+1):
+            if multiplier & (1 << i):
+                multiplier_binary_representation += str(2**i) + '+'
+                R_as_P_bin_sums += str(2**i) + 'P+'
+                R_as_P_recursive_bin_sums += elliptic_curve.__recursive_string(i) + '+'
+                while num_of_doubles < i:
+                    P = self.__double_point(P)
+                    num_of_doubles += 1
+                R = self.add_points(R,P)
         print()
-        print(f'{multiplier}P',end='=')
-        for two_power in multiplier_as_powers_of_two: print(f'{2**two_power}P',end='+')
-        print(end='=')
-        for two_power in multiplier_as_powers_of_two: print(elliptic_curve.__recursive_string(two_power),end='+')
-        print()
-        P_multiplied_by_powers_of_two = [P]
-        for i in range(multiplier_as_powers_of_two[-1]):
-            print(f'\nВычислим {2**(i+1)}P')
-            P_multiplied_by_powers_of_two.append(self.__double_point(P_multiplied_by_powers_of_two[-1]))
-        R = P_multiplied_by_powers_of_two[multiplier_as_powers_of_two[0]]
-        for two_power in multiplier_as_powers_of_two[1:]:
-            print()
-            R = self.add_points(R,P_multiplied_by_powers_of_two[two_power])
-        print(f'{R=}')
+        print(multiplier,multiplier_binary_representation[:-1],sep='=')
+        print(f'{multiplier}P',R_as_P_bin_sums[:-1],R_as_P_recursive_bin_sums[:-1],sep='=')
         return R
-    
+                
 
 def test():
     E = elliptic_curve(31,6,16)

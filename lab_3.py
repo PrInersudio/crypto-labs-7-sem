@@ -25,7 +25,15 @@ class point:
     
     def __repr__(self) -> str:
         return self.__str__()
+    
+    def __eq__(self, __value: 'point') -> bool:
+        return (self.x == __value.x) and (self.y == __value.y)
+    
+    def __ne__(self, __value: 'point') -> bool:
+        return (self.x != __value.x) or (self.y != __value.y)
 
+    def __neg__(self) -> 'point':
+        return point(self.x, -self.y)
 
 class elliptic_curve:
 
@@ -53,7 +61,7 @@ class elliptic_curve:
         print("\n")
         print(self)
         print(f'Левая часть: y^2={P.y**2}(mod {self.p})={P.y**2 % self.p}')
-        print(f'Правая часть: x^3+ax+b(mod {self.p})={P.x**3}+{self.a}*{P.x}+{self.b}(mod {self.p})={P.x**3+self.a*P.x+self.b}(mod {self.p})={(P.x**3+self.a*P.x+self.b) % self.p}')
+        print(f'Правая часть: x^3+ax+b(mod p)={P.x**3}+{self.a}*{P.x}+{self.b}(mod {self.p})={P.x**3+self.a*P.x+self.b}(mod {self.p})={(P.x**3+self.a*P.x+self.b) % self.p}')
         if P.y**2 % self.p == (P.x**3+self.a*P.x+self.b) % self.p:
             print("Левая часть равна правой, значит точка принадлежит кривой")
             return True
@@ -62,9 +70,12 @@ class elliptic_curve:
             return False
         
     def add_points(self, P: point, Q: point) -> point:
+        assert P != -Q
+        if P == Q: return self.__double_point(P)
+        print("Сложим",P,"и",Q)
         R = point()
         angular_coefficient = ((Q.y - P.y) * pow(Q.x - P.x, -1, self.p)) % self.p
-        print(f'lamda=({Q.y}-{P.y})/({Q.x}-{P.x})(mod {self.p})={Q.y - P.y}/{Q.x - P.x}(mod {self.p})={Q.y - P.y}*{pow(Q.x - P.x, -1, self.p)}(mod {self.p})={(Q.y - P.y) * pow(Q.x - P.x, -1, self.p)}(mod {self.p})={angular_coefficient}')
+        print(f'lambda=({Q.y}-{P.y})/({Q.x}-{P.x})(mod {self.p})={Q.y - P.y}/{Q.x - P.x}(mod {self.p})={Q.y - P.y}*{pow(Q.x - P.x, -1, self.p)}(mod {self.p})={(Q.y - P.y) * pow(Q.x - P.x, -1, self.p)}(mod {self.p})={angular_coefficient}')
         R.x = (angular_coefficient**2 - P.x - Q.x) % self.p
         print(f'x_R={angular_coefficient}^2-{P.x}-{Q.x}(mod {self.p})={angular_coefficient**2 - P.x - Q.x}(mod {self.p})={R.x}')
         R.y = (angular_coefficient * (P.x - R.x) - P.y) % self.p
@@ -73,9 +84,10 @@ class elliptic_curve:
         return R
     
     def __double_point(self, P: point) -> point:
+        print("Удвоим", P)
         R = point()
         angular_coefficient = ((3 * P.x**2 + self.a) * pow(2 * P.y, -1, self.p))%self.p
-        print(f'lamda=(3*{P.x}**2+{self.a})/(2*{P.y})(mod {self.p})={3 * P.x**2 + self.a}/{2 * P.y}(mod {self.p})={3 * P.x**2 + self.a}*{pow(2 * P.y, -1, self.p)}(mod {self.p})={(3 * P.x**2 + self.a) * pow(2 * P.y, -1, self.p)}(mod {self.p})={angular_coefficient}')
+        print(f'lambda=(3*{P.x}^2+{self.a})/(2*{P.y})(mod {self.p})={3 * P.x**2 + self.a}/{2 * P.y}(mod {self.p})={3 * P.x**2 + self.a}*{pow(2 * P.y, -1, self.p)}(mod {self.p})={(3 * P.x**2 + self.a) * pow(2 * P.y, -1, self.p)}(mod {self.p})={angular_coefficient}')
         R.x = (angular_coefficient**2 - 2 * P.x)%self.p
         print(f'x_R={angular_coefficient}^2-2*{P.x}(mod {self.p})={angular_coefficient**2 - 2 * P.x}(mod {self.p})={R.x}')
         R.y = (angular_coefficient * (P.x - R.x) - P.y)%self.p

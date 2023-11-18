@@ -24,4 +24,5 @@ for curve in task_1_curvers:
     for P in task_1_points:
         print(curve, P, curve.does_contain_point(P))
 print("\n\n")
-print(elliptic_curve(31,3,17).multiply_point(point(13,18), 13))
+curve_task_2 = elliptic_curve(31,3,17)
+print(curve_task_2.multiply_point(point(12,18), 13))

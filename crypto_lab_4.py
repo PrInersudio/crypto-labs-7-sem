@@ -2,6 +2,9 @@ from Crypto.Protocol.KDF import scrypt
 from Crypto.Util.Padding import pad, unpad
 from Crypto.Random import  get_random_bytes
 from gost import gost2015
+import psutil, os
+
+
 import MODE_CBC
 block_len = 16
 key_len = 32
@@ -9,6 +12,28 @@ plain_text_len = 2211
 padded_text_len = plain_text_len + block_len - (plain_text_len % block_len)
 
 
+# inner psutil function
+def process_memory():
+    process = psutil.Process(os.getpid())
+    mem_info = process.memory_info()
+    return mem_info.rss
+ 
+# decorator function
+def profile(func):
+    def wrapper(*args, **kwargs):
+ 
+        mem_before = process_memory()
+        result = func(*args, **kwargs)
+        mem_after = process_memory()
+        print("{}:consumed memory: {:,}".format(
+            func.__name__,
+            mem_before, mem_after, mem_after - mem_before))
+ 
+        return result
+    return wrapper
+
+
+@profile # result 66,760,704
 def encrypt():
     password = input("password: ")
     salt = get_random_bytes(8)

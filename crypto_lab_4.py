@@ -44,7 +44,7 @@ def encrypt():
     # https://words.filippo.io/the-scrypt-parameters/ So the minimum memory requirement of scrypt is: 128 × 𝑁 × 𝑟 bytes
     # Значит расход памяти будет 128*4096*32 байт ~ 16 Мбайт
     key1, key2 = scrypt(password=password, salt=salt.hex(), key_len=key_len, N = 4096, r = 32, p = 1, num_keys=2)
-    padded = pad(plain_text, block_size=block_len, style='pkcs7')
+    padded = plain_text + get_random_bytes(13)
     encrypted, tag = MODE_CBC.encrypt(gost2015(key1), padded, iv, True)
     cipher_key2 = gost2015(key2)
     tag = cipher_key2.encryption(tag)
@@ -63,7 +63,7 @@ def decrypt():
     cipher_key2 = gost2015(key2)
     tag = cipher_key2.decryption(tag)
     encrypted = MODE_CBC.decrypt(gost2015(key1), encrypted, iv, tag)
-    unpaded = unpad(encrypted, block_size=block_len, style='pkcs7')
+    unpaded = encrypted[:-13]
     open(input("decrypted file: "), "wb").write(unpaded)
 
 
